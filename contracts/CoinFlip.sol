@@ -9,7 +9,7 @@ contract CoinFlip is Ownable{
     event flipLost(uint losses);
     
     modifier validateBet(){
-        require(msg.value <= balance);
+        require(msg.value > 0 && msg.value <= balance);
         _;
     }
 
