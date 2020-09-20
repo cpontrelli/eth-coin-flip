@@ -24,7 +24,7 @@ function placeBet(){
 function addFunds() {
     var value = $("#funds_input").val();
 
-    contractInstance.methods.addFunds().send(value)
+    contractInstance.methods.addFunds().send({value})
         .on("transactionHash", function(hash) {
             console.log(hash);
         });
