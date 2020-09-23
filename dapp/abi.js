@@ -1,5 +1,30 @@
 var abi = [
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "result",
+        "type": "uint256"
+      }
+    ],
+    "name": "coinFlipped",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "flipLost",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "flipWon",
+    "type": "event"
+  },
+  {
     "constant": true,
     "inputs": [],
     "name": "balance",
@@ -39,13 +64,7 @@ var abi = [
       }
     ],
     "name": "settleBet",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [],
     "payable": true,
     "stateMutability": "payable",
     "type": "function"
@@ -80,4 +99,4 @@ var abi = [
     "stateMutability": "nonpayable",
     "type": "function"
   }
-];
+]

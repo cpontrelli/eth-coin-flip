@@ -5,30 +5,30 @@ contract CoinFlip is Ownable{
     uint public balance;
 
     event coinFlipped(uint result);
-    event flipWon(uint earnings);
-    event flipLost(uint losses);
+    event flipWon();
+    event flipLost();
     
     modifier validateBet(){
         require(msg.value > 0 && msg.value <= balance);
         _;
     }
 
-    function flipCoin() private view returns(uint) {
-        return now % 2;
+    function flipCoin() private returns(uint) {
+        uint result = now % 2;
+        emit coinFlipped(result);
+        return result;
     }
 
-    function settleBet(uint prediction) public payable validateBet returns(uint) {
+    function settleBet(uint prediction) public payable validateBet {
+        require(prediction == 0 || prediction == 1);
         uint outcome = flipCoin();
-        emit coinFlipped(outcome);
         if(outcome == prediction) {
+            emit flipWon();
             balance -= msg.value;
             msg.sender.transfer(msg.value * 2);
-            emit flipWon(msg.value);
-            return 1;
         } else {
-            balance += msg.value;
-            emit flipLost(msg.value);
-            return 0;            
+            emit flipLost();
+            balance += msg.value;     
         }
     }
 
