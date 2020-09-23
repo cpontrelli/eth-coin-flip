@@ -1,9 +1,11 @@
 var web3 = new Web3(Web3.givenProvider);
+var address = "0x116b8E810E255CA3A099d20ef6CcB06A41ea7219";
 var contractInstance;
+
 
 $(document).ready(function() {
     window.ethereum.enable().then(function(accounts) {
-        contractInstance = new web3.eth.Contract(abi, "0x116b8E810E255CA3A099d20ef6CcB06A41ea7219", {from: accounts[0]});
+        contractInstance = new web3.eth.Contract(abi, address, {from: accounts[0]});
         latestBlock = web3.eth.blockNumber
         
         console.log(contractInstance);
@@ -23,11 +25,16 @@ $(document).ready(function() {
 
 });
 
-function placeBet(){
+async function placeBet(){
     var prediction = $("#prediction").val();
     var bet = $("#bet_input").val() * (10 ** 18); //convert to Wei
+    var balance = await contractInstance.methods.balance().call();
 
-    contractInstance.methods.settleBet(prediction).send({value: bet})
+    if(balance >= bet && bet > 0) {
+        contractInstance.methods.settleBet(prediction).send({value: bet})
+    } else {
+        alert("Bet must be greater then 0 and less than " + balance/(10**18) + " ETH." );
+    }
 }
 
 function addFunds() {
