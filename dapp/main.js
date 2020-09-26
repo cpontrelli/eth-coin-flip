@@ -26,10 +26,11 @@ $(document).ready(function() {
 });
 
 async function placeBet(){
-    var prediction = $("#prediction").val();
-    var bet = $("#bet_input").val() * (10 ** 18); //convert to Wei
+    var prediction = parseInt($("#prediction").val());
+    var bet = parseFloat($("#bet_input").val()) * (10 ** 18); //convert to Wei
     var balance = await contractInstance.methods.balance().call();
-
+    balance = parseFloat(balance);
+    
     if(balance >= bet && bet > 0) {
         contractInstance.methods.settleBet(prediction).send({value: bet})
     } else {
@@ -38,7 +39,7 @@ async function placeBet(){
 }
 
 function addFunds() {
-    var value = $("#funds_input").val();
+    var value = $("#funds_input").val() * (10 ** 18); //convert to We;
 
     contractInstance.methods.addFunds().send({value})
         .on("transactionHash", function(hash) {
