@@ -35,7 +35,7 @@ contract("CoinFlip", async function(accounts) {
             if(event.result == 0) {
                 return balanceBefore == balanceAfter + .1;
             } else {
-                return balanceBefore > balanceAfter - .1;
+                return balanceBefore == balanceAfter - .1;
             }
         });
     });
@@ -48,7 +48,7 @@ contract("CoinFlip", async function(accounts) {
             if(event.result == 0) {
                 return balanceBefore == balanceAfter - .1;
             } else {
-                return balanceBefore < balanceAfter + .1;
+                return balanceBefore == balanceAfter + .1;
             }
         });
     });
