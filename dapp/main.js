@@ -9,11 +9,11 @@ var alert = `<div class="alert alert-dismissible fade show" role="alert">
             </div>`
 
 $(document).ready(function() {
-    window.ethereum.enable().then(function(accounts) {
+    window.ethereum.enable().then(async function(accounts) {
         contractInstance = new web3.eth.Contract(abi, address, {from: accounts[0]});
         
         console.log(contractInstance);
-
+       
         contractInstance.events.allEvents()
             .on('data', function(event){
                 if(event.event == "flipWon") {
@@ -44,7 +44,6 @@ $(document).ready(function() {
     });
 
     $("#place_bet_button").click(placeBet);
-    $("#add_funds_button").click(addFunds);
 
 });
 
@@ -63,13 +62,4 @@ async function placeBet(){
         $("#bet-alerts").prepend(warning);
         setTimeout(() => $(warning).alert('close'), 5000);
     }
-}
-
-function addFunds() {
-    var value = $("#funds_input").val() * (10 ** 18); //convert to We;
-
-    contractInstance.methods.addFunds().send({value})
-        .on("transactionHash", function(hash) {
-            console.log(hash);
-        });
 }
