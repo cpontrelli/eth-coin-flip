@@ -14,6 +14,7 @@ $(document).ready(function() {
         
         console.log(contractInstance);
        
+        //TO DO: Update event to check for the player's address
         contractInstance.events.allEvents()
             .on('data', function(event){
                 if(event.event == "flipWon") {
@@ -50,15 +51,15 @@ $(document).ready(function() {
 async function placeBet(){
     var prediction = parseInt($("#prediction").val());
     var bet = parseFloat($("#bet_input").val()) * (10 ** 18); //convert to Wei
-    var balance = await contractInstance.methods.balance().call();
+    var balance = await contractInstance.methods.freeBalance().call();
     balance = parseFloat(balance);
     
-    if(balance >= bet && bet > 0) {
-        contractInstance.methods.settleBet(prediction).send({value: bet})
+    if((balance / 50) >= bet && bet > 0) {
+        contractInstance.methods.placeBet(prediction).send({value: bet})
     } else {
         let warning = $.parseHTML(alert);
         $(warning).addClass("alert-danger");
-        $(warning).prepend("Bet must be <strong>greater</strong> than 0 and <strong>less</strong> than " + balance/(10**18) + " ETH.");
+        $(warning).prepend("Bet must be <strong>greater</strong> than 0 and <strong>less</strong> than " + (balance/(10**18))/50 + " ETH.");
         $("#bet-alerts").prepend(warning);
         setTimeout(() => $(warning).alert('close'), 5000);
     }

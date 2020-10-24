@@ -1,46 +1,106 @@
 import "./Ownable.sol";
+import "./ProvableApi.sol";
 pragma solidity 0.5.12;
 
-contract CoinFlip is Ownable{
-    uint public balance;
-
-    event coinFlipped(uint result);
-    event flipWon();
-    event flipLost();
+contract CoinFlip is Ownable, usingProvable{
+    uint public freeBalance;                            //balance not reserved for bet settlement
+    uint public lockedBalance;                          //balance reserved for bet settlement
+    uint256 constant NUM_RANDOM_BYTES_REQUESTED = 1;    //bytes requested from oracle
     
-    modifier validateBet(){
-        require(msg.value > 0 && msg.value <= balance);
+    event coinFlipped(uint result);
+    event flipWon(address player, uint value);
+    event flipLost(address player, uint value);
+
+    struct Player {
+        uint winnings;
+        bool initialized;
+    }
+
+    struct Bet {
+        address walletAddress;
+        uint prediction;
+        uint value;
+    }
+
+    mapping(address => Player) public players;
+    mapping(bytes32 => Bet) public bets;
+
+
+    modifier validateBet(uint prediction){
+        require(msg.value > 0 && msg.value <= (freeBalance / 50));
+        require(prediction == 0 || prediction == 1);
         _;
     }
 
-    function flipCoin() private returns(uint) {
-        uint result = now % 2;
-        emit coinFlipped(result);
-        return result;
+    function __callback(bytes32 _queryId, string memory _result, bytes memory _proof) public {
+        //require(msg.sender == provable_cbAddress());
+
+        //determine result of the flip
+        uint flip = uint256(keccak256(abi.encodePacked(_result))) % 2;
+        emit coinFlipped(flip);
+        
+        //settle the bet by either adjusting the player's winnings or contract balances
+        if(bets[_queryId].prediction == flip) {
+            emit flipWon(bets[_queryId].walletAddress, bets[_queryId].value);
+            players[bets[_queryId].walletAddress].winnings += bets[_queryId].value;
+
+        } else {
+            emit flipLost(bets[_queryId].walletAddress, bets[_queryId].value);
+            freeBalance += bets[_queryId].value;
+            lockedBalance -= bets[_queryId].value;
+        }
+
+        //delete bet from mapping
+        delete(bets[_queryId]);
     }
 
-    function settleBet(uint prediction) public payable validateBet {
-        require(prediction == 0 || prediction == 1);
-        uint outcome = flipCoin();
-        if(outcome == prediction) {
-            emit flipWon();
-            balance -= msg.value;
-            msg.sender.transfer(msg.value * 2);
-        } else {
-            emit flipLost();
-            balance += msg.value;     
-        }
+    function placeBet(uint prediction) public payable validateBet(prediction) {
+        /*uint256 QUERY_EXECUTION_DELAY = 0;
+        uint GAS_FOR_CALLBACK = 200000;
+        bytes32 queryId = provable_newRandomDSQuery(
+            QUERY_EXECUTION_DELAY, 
+            NUM_RANDOM_BYTES_REQUESTED, 
+            GAS_FOR_CALLBACK
+        );*/
+        bytes32 queryId = testRandom();
+
+        Bet memory newBet = Bet(msg.sender, prediction, msg.value);
+        bets[queryId] = newBet;
+        freeBalance -= msg.value;
+        lockedBalance += msg.value;
+
+        //if this is a new player add them to the players mapping
+        if(!players[msg.sender].initialized){
+            Player memory newPlayer = Player(0, true);
+            players[msg.sender] = newPlayer;
+        }  
+    }
+
+    function payWinnings() public returns(uint) {
+        require(players[msg.sender].winnings > 0);
+
+        uint toTransfer = players[msg.sender].winnings;
+        lockedBalance -= toTransfer;
+        msg.sender.transfer(toTransfer);
+        return toTransfer;
+    }
+
+    //only for testing on local node
+    function testRandom() public returns(bytes32) {
+        bytes32 queryId = bytes32(keccak256(abi.encodePacked(msg.sender)));
+        __callback(queryId, "1", bytes("test"));
+        return queryId;
     }
 
     function addFunds() public onlyOwner payable returns(uint) {
         require(msg.value > 0);
-        balance += msg.value;
-        return balance;
+        freeBalance += msg.value;
+        return freeBalance;
     }
 
     function withdrawAll() public onlyOwner returns(uint) {
-       uint toTransfer = balance;
-       balance = 0;
+       uint toTransfer = freeBalance;
+       freeBalance = 0;
        msg.sender.transfer(toTransfer);
        return toTransfer;
    }
