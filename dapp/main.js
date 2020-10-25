@@ -1,5 +1,5 @@
 var web3 = new Web3(Web3.givenProvider);
-var address = "0x116b8E810E255CA3A099d20ef6CcB06A41ea7219";
+var address = "0x1C9d372736De512c8461a27A6b4A8E4FC25C1B50";
 var contractInstance;
 
 var alert = `<div class="alert alert-dismissible fade show" role="alert">
@@ -14,22 +14,22 @@ $(document).ready(function() {
         
         console.log(contractInstance);
        
-        //TO DO: Update event to check for the player's address
         contractInstance.events.allEvents()
             .on('data', function(event){
-                if(event.event == "flipWon") {
+                console.log(event);
+                if(event.event == "flipWon" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let winningAlert = $.parseHTML(alert);
                     $(winningAlert).addClass("alert-success");
-                    $(winningAlert).prepend("<strong>Flip Won!</strong> Your winnings have been transferred.");
+                    $(winningAlert).prepend(`<strong>Flip Won!</strong> ${event.returnValues.value/(10**18)} ETH added to your winnings.`);
                     $("#bet-alerts").prepend(winningAlert);
                     setTimeout(() => $(winningAlert).alert('close'), 5000);
-                } else if (event.event == "flipLost") {
+                } else if (event.event == "flipLost" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let losingAlert = $.parseHTML(alert);
                     $(losingAlert).addClass("alert-danger");
                     $(losingAlert).prepend("<strong>Flip Lost</strong> Thanks for playing!");
                     $("#bet-alerts").prepend(losingAlert);
                     setTimeout(() => $(losingAlert).alert('close'), 5000);
-                } else if (event.event == "coinFlipped") {
+                } else if (event.event == "coinFlipped" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let flippedAlert = $.parseHTML(alert);
                     $(flippedAlert).addClass("alert-primary");
                     if(event.returnValues.result == "0")

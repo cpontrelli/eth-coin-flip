@@ -7,9 +7,10 @@ contract CoinFlip is Ownable, usingProvable{
     uint public lockedBalance;                          //balance reserved for bet settlement
     uint256 constant NUM_RANDOM_BYTES_REQUESTED = 1;    //bytes requested from oracle
     
-    event coinFlipped(uint result);
+    event coinFlipped(address player, uint result);
     event flipWon(address player, uint value);
     event flipLost(address player, uint value);
+    event paidWinnings(address player, uint value);
 
     struct Player {
         uint winnings;
@@ -37,7 +38,7 @@ contract CoinFlip is Ownable, usingProvable{
 
         //determine result of the flip
         uint flip = uint256(keccak256(abi.encodePacked(_result))) % 2;
-        emit coinFlipped(flip);
+        emit coinFlipped(bets[_queryId].walletAddress, flip);
         
         //settle the bet by either adjusting the player's winnings or contract balances
         if(bets[_queryId].prediction == flip) {
@@ -62,7 +63,9 @@ contract CoinFlip is Ownable, usingProvable{
             NUM_RANDOM_BYTES_REQUESTED, 
             GAS_FOR_CALLBACK
         );*/
-        bytes32 queryId = testRandom();
+
+        //TEST ONLY: would normally be returned by provable function
+        bytes32 queryId = bytes32(keccak256(abi.encodePacked(msg.sender)));
 
         Bet memory newBet = Bet(msg.sender, prediction, msg.value);
         bets[queryId] = newBet;
@@ -73,7 +76,10 @@ contract CoinFlip is Ownable, usingProvable{
         if(!players[msg.sender].initialized){
             Player memory newPlayer = Player(0, true);
             players[msg.sender] = newPlayer;
-        }  
+        }
+
+        //TEST ONLY: would normally be called by provable function
+        __callback(queryId, "1", bytes("test"));  
     }
 
     function payWinnings() public returns(uint) {
@@ -82,14 +88,8 @@ contract CoinFlip is Ownable, usingProvable{
         uint toTransfer = players[msg.sender].winnings;
         lockedBalance -= toTransfer;
         msg.sender.transfer(toTransfer);
+        emit paidWinnings(msg.sender, toTransfer);
         return toTransfer;
-    }
-
-    //only for testing on local node
-    function testRandom() public returns(bytes32) {
-        bytes32 queryId = bytes32(keccak256(abi.encodePacked(msg.sender)));
-        __callback(queryId, "1", bytes("test"));
-        return queryId;
     }
 
     function addFunds() public onlyOwner payable returns(uint) {
