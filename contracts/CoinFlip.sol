@@ -87,6 +87,7 @@ contract CoinFlip is Ownable, usingProvable{
 
         uint toTransfer = players[msg.sender].winnings;
         lockedBalance -= toTransfer;
+        players[msg.sender].winnings = 0;
         msg.sender.transfer(toTransfer);
         emit paidWinnings(msg.sender, toTransfer);
         return toTransfer;

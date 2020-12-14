@@ -1,5 +1,5 @@
 var web3 = new Web3(Web3.givenProvider);
-var address = "0x1C9d372736De512c8461a27A6b4A8E4FC25C1B50";
+var address = "0xcFE93E0eBEE8E77bc09d63482a88D9399E44f1aa";
 var contractInstance;
 
 var alert = `<div class="alert alert-dismissible fade show" role="alert">
@@ -13,15 +13,23 @@ $(document).ready(function() {
         contractInstance = new web3.eth.Contract(abi, address, {from: accounts[0]});
         
         console.log(contractInstance);
-       
+
+        let winnings = await calcWinnings(accounts[0]);
+        $("#withdraw_button").html(`Withdraw Winnings: ${winnings} ETH`);
+
+        $("#place_bet_button").click(placeBet);
+        $("#withdraw_button").click(() => withdrawWinnings(accounts[0]));
+
         contractInstance.events.allEvents()
-            .on('data', function(event){
+            .on('data', async function(event){
                 console.log(event);
-                if(event.event == "flipWon" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
+                if (event.event == "flipWon" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let winningAlert = $.parseHTML(alert);
                     $(winningAlert).addClass("alert-success");
                     $(winningAlert).prepend(`<strong>Flip Won!</strong> ${event.returnValues.value/(10**18)} ETH added to your winnings.`);
                     $("#bet-alerts").prepend(winningAlert);
+                    winnings = await calcWinnings(accounts[0]);
+                    $("#withdraw_button").html(`Withdraw Winnings: ${winnings} ETH`);
                     setTimeout(() => $(winningAlert).alert('close'), 5000);
                 } else if (event.event == "flipLost" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let losingAlert = $.parseHTML(alert);
@@ -40,12 +48,17 @@ $(document).ready(function() {
                     }
                     $("#bet-alerts").prepend(flippedAlert);
                     setTimeout(() => $(flippedAlert).alert('close'), 5000);
+                } else if (event.event == "paidWinnings" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
+                    let paidAlert = $.parseHTML(alert);
+                    $(paidAlert).addClass("alert-success");
+                    $(paidAlert).prepend(`<strong>${event.returnValues.value/(10**18)} ETH</strong> Transferred.`);
+                    $("#bet-alerts").prepend(paidAlert);
+                    winnings = await calcWinnings(accounts[0]);
+                    $("#withdraw_button").html(`Withdraw Winnings: ${winnings} ETH`);
+                    setTimeout(() => $(paidAlert).alert('close'), 5000);
                 }
             });
     });
-
-    $("#place_bet_button").click(placeBet);
-
 });
 
 async function placeBet(){
@@ -62,5 +75,29 @@ async function placeBet(){
         $(warning).prepend("Bet must be <strong>greater</strong> than 0 and <strong>less</strong> than " + (balance/(10**18))/50 + " ETH.");
         $("#bet-alerts").prepend(warning);
         setTimeout(() => $(warning).alert('close'), 5000);
+    }
+}
+
+async function calcWinnings(account) {
+    let winnings = 0;
+    try {
+        player = await contractInstance.methods.players(account).call();
+        winnings = (player.winnings / (10 ** 18));
+    } catch {
+        winnings = 0;
+    }
+    return winnings;
+}
+
+async function withdrawWinnings(account) {
+    let winnings = await calcWinnings(account);
+    if(winnings == 0) {
+        let warning = $.parseHTML(alert);
+        $(warning).addClass("alert-danger");
+        $(warning).prepend("<strong>No winnings available</strong>");
+        $("#bet-alerts").prepend(warning);
+        setTimeout(() => $(warning).alert('close'), 5000);
+    } else {
+        contractInstance.methods.payWinnings().send();
     }
 }
