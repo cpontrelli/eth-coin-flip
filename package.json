@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/cpontrelli/eth-coin-flip#readme",
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.1.1",
     "truffle-assertions": "^0.9.2"
   }
 }
