@@ -42,7 +42,7 @@ contract CoinFlip is Ownable, usingProvable{
         
         //settle the bet by either adjusting the player's winnings or contract balances
         if(bets[_queryId].prediction == flip) {
-            emit flipWon(bets[_queryId].walletAddress, bets[_queryId].value);
+            emit flipWon(bets[_queryId].walletAddress, bets[_queryId].value * 2);
             players[bets[_queryId].walletAddress].winnings += bets[_queryId].value * 2;
 
         } else {
