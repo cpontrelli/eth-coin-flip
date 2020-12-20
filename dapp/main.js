@@ -1,5 +1,5 @@
 var web3 = new Web3(Web3.givenProvider);
-var address = "0xcFE93E0eBEE8E77bc09d63482a88D9399E44f1aa";
+var address = "0x22baD485F0D9475DF20ee6b3E1776ffEADed23AD";
 var contractInstance;
 
 var alert = `<div class="alert alert-dismissible fade show" role="alert">
@@ -30,13 +30,13 @@ $(document).ready(function() {
                     $("#bet-alerts").prepend(winningAlert);
                     winnings = await calcWinnings(accounts[0]);
                     $("#withdraw_button").html(`Withdraw Winnings: ${winnings} ETH`);
-                    setTimeout(() => $(winningAlert).alert('close'), 5000);
+                    setTimeout(() => $(winningAlert).alert('close'), 10000);
                 } else if (event.event == "flipLost" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let losingAlert = $.parseHTML(alert);
                     $(losingAlert).addClass("alert-danger");
                     $(losingAlert).prepend("<strong>Flip Lost</strong> Thanks for playing!");
                     $("#bet-alerts").prepend(losingAlert);
-                    setTimeout(() => $(losingAlert).alert('close'), 5000);
+                    setTimeout(() => $(losingAlert).alert('close'), 10000);
                 } else if (event.event == "coinFlipped" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let flippedAlert = $.parseHTML(alert);
                     $(flippedAlert).addClass("alert-primary");
@@ -47,7 +47,7 @@ $(document).ready(function() {
                         $(flippedAlert).prepend("<strong>Tails</strong>");
                     }
                     $("#bet-alerts").prepend(flippedAlert);
-                    setTimeout(() => $(flippedAlert).alert('close'), 5000);
+                    setTimeout(() => $(flippedAlert).alert('close'), 10000);
                 } else if (event.event == "paidWinnings" && accounts[0].toUpperCase() == event.returnValues.player.toUpperCase()) {
                     let paidAlert = $.parseHTML(alert);
                     $(paidAlert).addClass("alert-success");
@@ -55,7 +55,7 @@ $(document).ready(function() {
                     $("#bet-alerts").prepend(paidAlert);
                     winnings = await calcWinnings(accounts[0]);
                     $("#withdraw_button").html(`Withdraw Winnings: ${winnings} ETH`);
-                    setTimeout(() => $(paidAlert).alert('close'), 5000);
+                    setTimeout(() => $(paidAlert).alert('close'), 10000);
                 }
             });
     });
