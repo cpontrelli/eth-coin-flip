@@ -1,5 +1,5 @@
 var web3 = new Web3(Web3.givenProvider);
-var address = "0x22baD485F0D9475DF20ee6b3E1776ffEADed23AD";
+var address = "0x8b70812af3Ee40BDa81cCE91D5F8bF7bA0C09412";
 var contractInstance;
 
 var alert = `<div class="alert alert-dismissible fade show" role="alert">
