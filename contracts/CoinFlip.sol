@@ -1,5 +1,5 @@
 import "./Ownable.sol";
-import "./ProvableApi.sol";
+import "./ProvableAPI.sol";
 pragma solidity 0.5.12;
 
 contract CoinFlip is Ownable, usingProvable{
@@ -11,6 +11,7 @@ contract CoinFlip is Ownable, usingProvable{
     event flipWon(address player, uint value);
     event flipLost(address player, uint value);
     event paidWinnings(address player, uint value);
+    event proofInvalid();
 
     struct Player {
         uint winnings;
@@ -33,26 +34,38 @@ contract CoinFlip is Ownable, usingProvable{
         _;
     }
 
+    constructor()
+        public
+    {
+        provable_setProof(proofType_Ledger);
+    }
+
     function __callback(bytes32 _queryId, string memory _result, bytes memory _proof) public {
-        require(msg.sender == provable_cbAddress());
-
-        //determine result of the flip
-        uint flip = uint256(keccak256(abi.encodePacked(_result))) % 2;
-        emit coinFlipped(bets[_queryId].walletAddress, flip);
         
-        //settle the bet by either adjusting the player's winnings or contract balances
-        if(bets[_queryId].prediction == flip) {
-            emit flipWon(bets[_queryId].walletAddress, bets[_queryId].value * 2);
-            players[bets[_queryId].walletAddress].winnings += bets[_queryId].value * 2;
+        require(msg.sender == provable_cbAddress());
+        uint _returnCode = provable_randomDS_proofVerify__returnCode(_queryId, _result, _proof);
 
+        if (_returnCode != 0) {
+            emit proofInvalid();
         } else {
-            emit flipLost(bets[_queryId].walletAddress, bets[_queryId].value);
-            freeBalance += bets[_queryId].value * 2;
-            lockedBalance -= bets[_queryId].value * 2;
-        }
+            //determine result of the flip
+            uint flip = uint256(keccak256(abi.encodePacked(_result))) % 2;
+            emit coinFlipped(bets[_queryId].walletAddress, flip);
+            
+            //settle the bet by either adjusting the player's winnings or contract balances
+            if(bets[_queryId].prediction == flip) {
+                emit flipWon(bets[_queryId].walletAddress, bets[_queryId].value * 2);
+                players[bets[_queryId].walletAddress].winnings += bets[_queryId].value * 2;
 
-        //delete bet from mapping
-        delete(bets[_queryId]);
+            } else {
+                emit flipLost(bets[_queryId].walletAddress, bets[_queryId].value);
+                freeBalance += bets[_queryId].value * 2;
+                lockedBalance -= bets[_queryId].value * 2;
+            }
+
+            //delete bet from mapping
+            delete(bets[_queryId]);
+        }
     }
 
     function placeBet(uint prediction) public payable validateBet(prediction) {
