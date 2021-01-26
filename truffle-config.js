@@ -18,11 +18,12 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
-// const infuraKey = "fj4jll3k.....";
-//
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
+const fs = require('fs');
+const wrapProvider = require('arb-ethers-web3-bridge').wrapProvider
+const HDWalletProvider = require('@truffle/hdwallet-provider')
+
+const mnemonic = fs.readFileSync(".secret").toString().trim();
+const arbProviderUrl = 'https://kovan3.arbitrum.io/rpc'
 
 module.exports = {
   /**
@@ -57,6 +58,17 @@ module.exports = {
       // from: <address>,        // Account to send txs from (default: accounts[0])
       // websockets: true        // Enable EventEmitter interface for web3 (default: false)
     // },
+
+    arbitrum: {
+      provider: function () {
+        // return wrapped provider:
+        return wrapProvider(
+          new HDWalletProvider(mnemonic, arbProviderUrl)
+        )
+      },
+      network_id: '*',
+      gasPrice: 0,
+    },
 
     // Useful for deploying to a public network.
     // NB: It's important to wrap the provider as a function.
